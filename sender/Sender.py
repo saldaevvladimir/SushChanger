@@ -2,6 +2,7 @@ import sys
 from PyQt5.QtCore import QSize
 from PyQt5.QtGui import QFont
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QHBoxLayout, QWidget
+import socket
 
 
 class Sender(QMainWindow):
@@ -10,7 +11,8 @@ class Sender(QMainWindow):
 
         self.setWindowTitle("Sender")
 
-        self.setFixedSize(QSize(200, 80))
+        window_size = QSize(200, 80)
+        self.setFixedSize(window_size)
 
         self.build_ui()
 
@@ -33,10 +35,16 @@ class Sender(QMainWindow):
         self.setCentralWidget(layout_widget)
 
     def on_click(self):
-        pass
+        client.send('1'.encode('utf-8'))
 
 
 if __name__ == "__main__":
+    ip = "192.168.43.230"
+    passw = 1234
+
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect((ip, passw))
+
     app = QApplication(sys.argv)
 
     sender = Sender()
