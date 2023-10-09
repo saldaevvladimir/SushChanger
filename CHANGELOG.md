@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.0.2] - 09.10.2023
+
+### Changed
+
+- instead of a timer, a separate thread was created to track messages on the local network
+
+## [1.0.1] - 09.10.2023
+
+### Added 
+
+- functions for changing image by pressing a button
+
 ## [1.0.0] - 08.10.2023
 
 ### Added
