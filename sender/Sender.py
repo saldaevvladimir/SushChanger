@@ -1,7 +1,7 @@
 import sys
 import os
 from PyQt5.QtCore import QSize
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QIcon
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QHBoxLayout, QWidget, QMessageBox, QDialog
 import socket
 
@@ -20,6 +20,9 @@ class Sender(QMainWindow):
 
         self.setWindowTitle("Sender")
 
+        icon_path = "img/icons/sender.png"
+        self.setWindowIcon(QIcon(icon_path))
+
         window_size = QSize(200, 80)
         self.setFixedSize(window_size)
 
@@ -31,6 +34,8 @@ class Sender(QMainWindow):
         self.open_ip_dialog()
 
         self.start_server(self.ip, self.port)
+
+        QMessageBox.information(self, "Message", "Press the <click> button once and then connect the receiver")
 
     def build_ui(self):
         self.send_btn = QPushButton("click")
@@ -79,6 +84,8 @@ class Sender(QMainWindow):
         if dialog.exec_() == QDialog.Accepted:
             if self.client:
                 self.client.close()
+        else:
+            sys.exit()
 
     def closeEvent(self, event):
         if self.client:

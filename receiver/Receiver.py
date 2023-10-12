@@ -1,8 +1,8 @@
 import sys
 import os
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
-from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QLabel
+from PyQt5.QtGui import QPixmap, QIcon
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QLabel, QMessageBox
 import glob
 from threading import Thread
 
@@ -11,7 +11,7 @@ sys.path.append(project_path)
 
 from tools.IPTools import IPDialog
 
-DEFAULT_IMG_PATH = 'img/0.png'
+DEFAULT_IMG_PATH = 'img/sush/0.png'
 
 
 class Receiver(QMainWindow):
@@ -23,6 +23,9 @@ class Receiver(QMainWindow):
         super().__init__(parent)
 
         self.setWindowTitle("Receiver")
+
+        icon_path = "img/icons/receiver.png"
+        self.setWindowIcon(QIcon(icon_path))
 
         self.build_ui()
 
@@ -76,7 +79,7 @@ class Receiver(QMainWindow):
     def upd_img(self):
         self.img_index = (self.img_index + 1) % img_count
 
-        img_path = f"img/{self.img_index}.png"
+        img_path = f"img/sush/{self.img_index}.png"
         self.set_img(img_path)
 
     def open_ip_dialog(self):
@@ -102,12 +105,13 @@ class Receiver(QMainWindow):
         super().closeEvent(event)
 
 
-img_count = len(glob.glob("img/*.png")) - 1
+img_count = len(glob.glob("img/sush/*.png")) - 1
 
 app = QApplication(sys.argv)
 
 receiver = Receiver()
 receiver.show()
+QMessageBox.information(receiver, "Message", "Click on the image to select ip")
 
 sys.exit(app.exec_())
 
