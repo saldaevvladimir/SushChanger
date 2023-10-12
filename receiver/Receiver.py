@@ -1,16 +1,23 @@
 import sys
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
+import os
+from PyQt5.QtCore import pyqtSignal, pyqtSlot, Qt
 from PyQt5.QtGui import QPixmap
-from PyQt5.QtWidgets import QApplication, QMainWindow, QLabel
+from PyQt5.QtWidgets import QApplication, QMainWindow, QDialog, QLabel
 import glob
-import socket
-import threading
-import time
+from threading import Thread
 
-DEFAULT_IMG_PATH = '../img/0.png'
+project_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(project_path)
+
+from tools.IPTools import IPDialog
+
+DEFAULT_IMG_PATH = 'img/0.png'
+
 
 class Receiver(QMainWindow):
     upd_img_signal = pyqtSignal()
+    listening_thread = None
+    client = None
 
     def __init__(self, parent = None):
         super().__init__(parent)
@@ -21,15 +28,17 @@ class Receiver(QMainWindow):
 
         self.img_index = 0
 
-        self.server = None
-        self.client = None
-
         self.set_img(DEFAULT_IMG_PATH)
 
         self.upd_img_signal.connect(self.upd_img)
 
+        self.ip = None
+        self.port = 1234
+
     def build_ui(self):
         self.img_label = QLabel()
+
+        self.img_label.setToolTip("click")
         
         self.setCentralWidget(self.img_label)
 
@@ -37,49 +46,68 @@ class Receiver(QMainWindow):
         self.img_label.setPixmap(QPixmap(path))
         self.adjustSize()
 
-    def start_server(self):
-        self.server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.server.bind((ip, passw))
-        self.server.listen()
+    def on_img_click(self):
+        if self.client:
+            return
+        
+        self.open_ip_dialog()
 
-        self.client, _ = self.server.accept()
+        self.img_label.setToolTip("")
 
-        threading.Thread(target = self.listen_for_msg).start()
+    def start_listening(self):
+        self.listening_thread = Thread(target = self.listen_for_msg)
+        self.listening_thread.start()
 
-    def stop_server(self):
-        if self.server:
-            self.server.close()
+    def stop_listening(self):
+        if not self.listening_thread:
+            return
+        
+        self.listening_thread.join(False)
+        self.client.close()
 
     def listen_for_msg(self):
         while True:
-            data = self.client.recv(1024).decode('utf-8').lower()
+            msg = self.client.recv(1024).decode('utf-8').lower()
 
-            if data:
-                self.img_index = (self.img_index + 1) % img_count
-
+            if msg:
                 self.upd_img_signal.emit()
             
     @pyqtSlot()
     def upd_img(self):
-        img_path = f"../img/{self.img_index}.png"
+        self.img_index = (self.img_index + 1) % img_count
+
+        img_path = f"img/{self.img_index}.png"
         self.set_img(img_path)
 
+    def open_ip_dialog(self):
+        expected_serv_state = True
+        dialog = IPDialog(self)
+        dialog.set_expected_serv_state(expected_serv_state)
+
+        if dialog.exec_() == QDialog.Accepted:
+            if self.client:
+                self.start_listening()
+
+    def mousePressEvent(self, event):
+        if event.button() in (Qt.LeftButton, Qt.RightButton) and event.pos() in self.img_label.geometry():
+            self.on_img_click()
+        super().mousePressEvent(event)
+
     def closeEvent(self, event):
-        self.stop_server()
+        if self.listening_thread:
+            self.stop_listening()
+        if self.client:
+            self.client.close()
+
         super().closeEvent(event)
 
 
-if __name__ == "__main__":
-    img_count = len(glob.glob("../img/*.png")) - 1
+img_count = len(glob.glob("img/*.png")) - 1
 
-    ip = "192.168.43.230"
-    passw = 1234
+app = QApplication(sys.argv)
 
-    app = QApplication(sys.argv)
+receiver = Receiver()
+receiver.show()
 
-    receiver = Receiver()
-    receiver.start_server()
-    receiver.show()
-    
-    sys.exit(app.exec_())
+sys.exit(app.exec_())
 

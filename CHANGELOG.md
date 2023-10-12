@@ -1,5 +1,15 @@
 # Changelog
 
+## [1.0.3] - 13.10.2023
+
+## Changed
+
+- moved the server from the receiver to the sender
+
+## Added
+
+- dialog windows for selecting the used ip
+
 ## [1.0.2] - 09.10.2023
 
 ### Changed
