@@ -84,6 +84,8 @@ class Sender(QMainWindow):
         if dialog.exec_() == QDialog.Accepted:
             if self.client:
                 self.client.close()
+            
+            self.send_btn.setToolTip(self.ip)
         else:
             sys.exit()
 

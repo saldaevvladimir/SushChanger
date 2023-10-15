@@ -1,5 +1,5 @@
-import sys
-from PyQt5.QtWidgets import QPushButton, QVBoxLayout, QDialog, QLineEdit, QMessageBox
+import netifaces as ni
+from PyQt5.QtWidgets import QPushButton, QVBoxLayout, QDialog, QComboBox, QLineEdit, QMessageBox
 import socket
 
 
@@ -11,17 +11,25 @@ def check_server_con(ip):
     except socket.error as e:
         return False, None
     
+
 def get_available_ips():
-    available_ips = []
+    addresses = []
 
-    hostname = socket.gethostname()
-    ip_addresses = socket.getaddrinfo(hostname, None)
-    for address in ip_addresses:
-        ip = address[4][0]
-        if ip not in available_ips:
-            available_ips.append(ip)
+    interfaces = ni.interfaces()
 
-    return available_ips
+    for interface in interfaces:
+        addrs = ni.ifaddresses(interface)
+
+        if ni.AF_INET in addrs:
+            ipv4_addrs = addrs[ni.AF_INET]
+
+            for addr in ipv4_addrs:
+                ip = addr['addr']
+                if not ip.startswith('127.') and not ip.startswith('169.254.') and not ip.endswith('56.1'):
+                    if ip.startswith('192.168.') or ip.startswith('10.') or ip.startswith('172.'):
+                        addresses.append(ip)
+
+    return addresses
 
 
 def check_ip(ip):
@@ -43,22 +51,42 @@ class IPDialog(QDialog):
         self.build_ui()
 
     def build_ui(self):
+        self.ip_combobox = QComboBox(self)
         self.ip_line = QLineEdit(self)
 
+        self.fill_ips()
+        
         self.button = QPushButton("confirm")
         self.button.clicked.connect(self.validate_ip)
         
         layout = QVBoxLayout()
+        layout.addWidget(self.ip_combobox)
         layout.addWidget(self.ip_line)
         layout.addWidget(self.button)
         
         self.setLayout(layout)
+    
+    def fill_ips(self):
+        ips = get_available_ips()
+
+        for ip in ips:
+            self.ip_combobox.addItem(ip)
 
     def set_expected_serv_state(self, state):
         self.expected_serv_state = state
+
+        if state:
+            self.ip_combobox.hide()
+        else:
+            self.ip_line.hide()
         
     def validate_ip(self):
-        ip = self.ip_line.text()
+        ip = None
+
+        if self.expected_serv_state:
+            ip = self.ip_line.text()
+        else:
+            ip = self.ip_combobox.currentText()
 
         serv_state, client = check_ip(ip)
 
@@ -68,4 +96,4 @@ class IPDialog(QDialog):
             self.accept()
         else:
             QMessageBox.warning(self, "Error", "ip unavailable")
-            
+

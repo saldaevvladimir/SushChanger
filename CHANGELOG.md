@@ -1,5 +1,11 @@
 # Changelog
 
+## [1.0.4] - 15.10.2023
+
+## Fixed
+
+- problem with ip lists 
+
 ## [1.0.3] - 13.10.2023
 
 ## Changed
